@@ -20,9 +20,13 @@ import (
 	"bytes"
 	"encoding/json"
 
-	globs "github.com/spf13/viper"
 	"github.com/spf13/cast"
+	globs "github.com/spf13/viper"
 )
+
+// insure that the globs (viper) packages env prefix is set *before* any
+// init() functions are run so they all honor hte DVLN_ prefix
+var envPrefix = globs.SetEnvPrefix("DVLN")
 
 func init() {
 	// Section: BasicGlobal variables to store data (default value only, no overrides)
@@ -43,4 +47,3 @@ func PrettyJSON(b []byte) (string, error) {
 	err := json.Indent(&out, b, "", "  ")
 	return cast.ToString(out.Bytes()), err
 }
-
