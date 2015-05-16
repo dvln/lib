@@ -25,29 +25,37 @@ import (
 
 	"github.com/dvln/out"
 	"github.com/dvln/toolver"
-	cfg "github.com/spf13/viper"
+	globs "github.com/spf13/viper"
 )
 
-// DvlnVer returns the version of the dvln tool and the build date for
+func init() {
+	// Section: ConstGlobal variables to store data (default value only, no overrides)
+	// - please add them alphabetically and don't reuse existing opts/vars
+	globs.SetDefault("dvlnToolVer", "0.0.1") // current version of the dvln tool
+	globs.SetDesc("dvlnToolVer", "current version of the dvln tool", globs.InternalUse, globs.ConstGlobal)
+}
+
+// DvlnToolInfo returns the version of the dvln tool and the build date for
 // the binary being used and returns both, will return non-nil error on
 // issues (currently only possible error will result in empty build date)
-func DvlnVer() (string, string, error) {
-	toolVer := cfg.GetString("dvlnToolVer")
-	buildDate, err := toolver.BuildDate() // set the build date from executable's mdate
+func DvlnToolInfo() (string, string, string, error) {
+	toolVer := globs.GetString("dvlnToolVer")
+	// get the build date of the current executable
+	execName, buildDate, err := toolver.ExecutableInfo()
 	if err != nil {
 		fmt.Errorf("Problem determining build date, error: %s", err)
 	}
-	return toolVer, buildDate, err
+	return execName, toolVer, buildDate, err
 }
 
 // DvlnVerStr returns a string with the version of the dvln tool such
 // that it honors verbosity levels as well as look (text/json)
 func DvlnVerStr() string {
-	toolVer, buildDate, err := DvlnVer()
+	execName, toolVer, buildDate, err := DvlnToolInfo()
 	// Get current runtime settings around desired verbosity and look (format)
-	look := cfg.GetString("look")
-	terse := cfg.GetBool("terse")
-	verbose := cfg.GetBool("verbose")
+	look := globs.GetString("look")
+	terse := globs.GetBool("terse")
+	verbose := globs.GetBool("verbose")
 	if err != nil {
 		// err in this case is not a big deal, means no build date
 		// at the debug output level it won't show up normally unless
@@ -58,20 +66,28 @@ func DvlnVerStr() string {
 	var dvlnVerStr string
 	if terse {
 		switch look {
-			case "json": dvlnVerStr = fmt.Sprintf("{\"toolver\": \"%s\"}", toolVer)
-			case "text": dvlnVerStr = fmt.Sprint(toolVer)
+		case "json":
+			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\"}", toolVer)))
+		case "text":
+			dvlnVerStr = fmt.Sprint(toolVer)
 		}
 	} else if verbose {
 		switch look {
-			case "json": dvlnVerStr = fmt.Sprintf("{\"toolver\": \"%s\", \"builddate\": \"%s\"}", toolVer, buildDate)
-			case "text": dvlnVerStr = fmt.Sprintf("Version: %s, Build date: %s", toolVer, buildDate)
+		case "json":
+			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"execname\": \"%s\", \"toolver\": \"%s\", \"builddate\": \"%s\"}", execName, toolVer, buildDate)))
+		case "text":
+			dvlnVerStr = fmt.Sprintf("Exec Name: %s\nVersion: %s\nBuild Date: %s", execName, toolVer, buildDate)
 		}
 	} else {
 		switch look {
-			case "json": dvlnVerStr = fmt.Sprintf("{\"toolver\": \"%s\"}", toolVer)
-			case "text": dvlnVerStr = fmt.Sprintf("Version: %s", toolVer)
+		case "json":
+			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"builddate\": \"%s\"}", toolVer, buildDate)))
+		case "text":
+			dvlnVerStr = fmt.Sprintf("Version: %s\nBuild Date: %s", toolVer, buildDate)
 		}
+	}
+	if err != nil {
+		out.Fatalln("Failed to parse devline version JSON string:", err)
 	}
 	return dvlnVerStr
 }
-
