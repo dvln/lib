@@ -20,13 +20,27 @@ import (
 	"bytes"
 	"encoding/json"
 
+	globs "github.com/spf13/viper"
 	"github.com/spf13/cast"
 )
+
+func init() {
+	// Section: BasicGlobal variables to store data (default value only, no overrides)
+	// - please add them alphabetically and don't reuse existing opts/vars
+	globs.SetDefault("rawjson", false)
+	globs.SetDesc("rawjson", "Used to print JSON in non-pretty raw format", globs.ExpertUser, globs.BasicGlobal)
+}
 
 // PrettyJSON pretty prints JSON data with two space indent, it will return
 // a string result along with an error (if any)
 func PrettyJSON(b []byte) (string, error) {
+	rawjson := globs.GetBool("rawjson")
+	if rawjson {
+		// if there's an override to say pretty JSON is not desired, honor it
+		return cast.ToString(b), nil
+	}
 	var out bytes.Buffer
 	err := json.Indent(&out, b, "", "  ")
 	return cast.ToString(out.Bytes()), err
 }
+
