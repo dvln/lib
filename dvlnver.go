@@ -74,16 +74,16 @@ func DvlnVerStr() string {
 	} else if verbose {
 		switch look {
 		case "json":
-			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"execname\": \"%s\", \"toolver\": \"%s\", \"builddate\": \"%s\"}", execName, toolVer, buildDate)))
+			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"execname\": \"%s\", \"builddate\": \"%s\"}", toolVer, execName, buildDate)))
 		case "text":
-			dvlnVerStr = fmt.Sprintf("Exec Name: %s\nVersion: %s\nBuild Date: %s", execName, toolVer, buildDate)
+			dvlnVerStr = fmt.Sprintf("Version:    %s\nExec Name:  %s\nBuild Date: %s", toolVer, execName, buildDate)
 		}
 	} else {
 		switch look {
 		case "json":
 			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"builddate\": \"%s\"}", toolVer, buildDate)))
 		case "text":
-			dvlnVerStr = fmt.Sprintf("Version: %s\nBuild Date: %s", toolVer, buildDate)
+			dvlnVerStr = fmt.Sprintf("Version:    %s\nBuild Date: %s", toolVer, buildDate)
 		}
 	}
 	if err != nil {
