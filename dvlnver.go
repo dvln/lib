@@ -56,6 +56,8 @@ func DvlnVerStr() string {
 	look := globs.GetString("look")
 	terse := globs.GetBool("terse")
 	verbose := globs.GetBool("verbose")
+	//eriknow: perhaps migrate this into a struct and use Marshal w/prettyJSON
+	//         for the json and pretty.Sprintf("%# v", struct) for the text form
 	if err != nil {
 		// err in this case is not a big deal, means no build date
 		// at the debug output level it won't show up normally unless
@@ -67,21 +69,21 @@ func DvlnVerStr() string {
 	if terse {
 		switch look {
 		case "json":
-			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\"}", toolVer)))
+			dvlnVerStr, err = out.PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\"}", toolVer)))
 		case "text":
 			dvlnVerStr = fmt.Sprint(toolVer)
 		}
 	} else if verbose {
 		switch look {
 		case "json":
-			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"execname\": \"%s\", \"builddate\": \"%s\"}", toolVer, execName, buildDate)))
+			dvlnVerStr, err = out.PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"execname\": \"%s\", \"builddate\": \"%s\"}", toolVer, execName, buildDate)))
 		case "text":
 			dvlnVerStr = fmt.Sprintf("Version:    %s\nExec Name:  %s\nBuild Date: %s", toolVer, execName, buildDate)
 		}
 	} else {
 		switch look {
 		case "json":
-			dvlnVerStr, err = PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"builddate\": \"%s\"}", toolVer, buildDate)))
+			dvlnVerStr, err = out.PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"builddate\": \"%s\"}", toolVer, buildDate)))
 		case "text":
 			dvlnVerStr = fmt.Sprintf("Version:    %s\nBuild Date: %s", toolVer, buildDate)
 		}
