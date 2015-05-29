@@ -21,25 +21,27 @@
 package lib
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/dvln/out"
 	"github.com/dvln/toolver"
+	"github.com/kr/pretty"
 	globs "github.com/spf13/viper"
 )
 
 func init() {
 	// Section: ConstGlobal variables to store data (default value only, no overrides)
 	// - please add them alphabetically and don't reuse existing opts/vars
-	globs.SetDefault("dvlnToolVer", "0.0.1") // current version of the dvln tool
-	globs.SetDesc("dvlnToolVer", "current version of the dvln tool", globs.InternalUse, globs.ConstGlobal)
+	globs.SetDefault("toolver", "0.0.1") // current version of the dvln tool
+	globs.SetDesc("toolver", "current version of the dvln tool", globs.InternalUse, globs.ConstGlobal)
 }
 
 // DvlnToolInfo returns the version of the dvln tool and the build date for
 // the binary being used and returns both, will return non-nil error on
 // issues (currently only possible error will result in empty build date)
 func DvlnToolInfo() (string, string, string, error) {
-	toolVer := globs.GetString("dvlnToolVer")
+	toolVer := globs.GetString("toolver")
 	// get the build date of the current executable
 	execName, buildDate, err := toolver.ExecutableInfo()
 	if err != nil {
@@ -56,40 +58,48 @@ func DvlnVerStr() string {
 	look := globs.GetString("look")
 	terse := globs.GetBool("terse")
 	verbose := globs.GetBool("verbose")
-	//eriknow: perhaps migrate this into a struct and use Marshal w/prettyJSON
-	//         for the json and pretty.Sprintf("%# v", struct) for the text form
 	if err != nil {
 		// err in this case is not a big deal, means no build date
 		// at the debug output level it won't show up normally unless
 		// debugging is on (at which point parsing isn't gonna fly
-		// anyhow, so just show the error directly when debugging)
+		// anyhow, so just display the error directly when debugging)
 		out.Debugln(err)
 	}
-	var dvlnVerStr string
-	if terse {
-		switch look {
-		case "json":
-			dvlnVerStr, err = out.PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\"}", toolVer)))
-		case "text":
-			dvlnVerStr = fmt.Sprint(toolVer)
-		}
-	} else if verbose {
-		switch look {
-		case "json":
-			dvlnVerStr, err = out.PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"execname\": \"%s\", \"builddate\": \"%s\"}", toolVer, execName, buildDate)))
-		case "text":
-			dvlnVerStr = fmt.Sprintf("Version:    %s\nExec Name:  %s\nBuild Date: %s", toolVer, execName, buildDate)
-		}
-	} else {
-		switch look {
-		case "json":
-			dvlnVerStr, err = out.PrettyJSON([]byte(fmt.Sprintf("{\"toolver\": \"%s\", \"builddate\": \"%s\"}", toolVer, buildDate)))
-		case "text":
-			dvlnVerStr = fmt.Sprintf("Version:    %s\nBuild Date: %s", toolVer, buildDate)
-		}
+	type itemData struct {
+		ToolVersion string `json:"toolVersion" pretty:"Version"`
+		ExecName    string `json:"execName,omitempty" pretty:"Exec Name,omitempty"`
+		BuildDate   string `json:"buildDate,omitempty" pretty:"Build Date,omitempty"`
 	}
-	if err != nil {
-		out.Fatalln("Failed to parse devline version JSON string:", err)
+	items := make([]interface{}, 0, 0)
+	var newItem itemData
+	newItem.ToolVersion = toolVer
+	if !terse {
+		newItem.BuildDate = buildDate
 	}
-	return dvlnVerStr
+	if verbose {
+		newItem.ExecName = execName
+	}
+	items = append(items, newItem)
+	if look == "json" {
+		j, err := json.Marshal(items)
+		//FIXME erik: need to push out into JSON mode to get json class errs,
+		//         same as below and all other errors, ie: write 'api' pkg
+		//         and in json.go create api.MarshalItems(items) and that
+		//         will do all the below and insert any errors into the
+		//         "overall" JSON struct (rest of this should migrate to new
+		//         package as well, see viper.go for similar code and we
+		//         don't like having duplicate code and such)
+		if err != nil {
+			out.Issueln("Failed to convert \"version\" items to JSON:", err)
+			return ""
+		}
+		var str string
+		str, err = out.PrettyJSON(j)
+		if err != nil {
+			out.Issueln("Unable to beautify JSON output:", err)
+			return ""
+		}
+		return str
+	}
+	return pretty.Sprintf("%# v", items)
 }
