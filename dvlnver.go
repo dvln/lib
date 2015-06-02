@@ -21,39 +21,52 @@
 package lib
 
 import (
-	"encoding/json"
 	"fmt"
+	"os"
 
+	"github.com/dvln/api"
 	"github.com/dvln/out"
 	"github.com/dvln/toolver"
 	"github.com/kr/pretty"
 	globs "github.com/spf13/viper"
 )
 
+const (
+	toolVer = "0.0.1"
+	apiVer  = "0.1"
+)
+
 func init() {
 	// Section: ConstGlobal variables to store data (default value only, no overrides)
 	// - please add them alphabetically and don't reuse existing opts/vars
-	globs.SetDefault("toolver", "0.0.1") // current version of the dvln tool
+	globs.SetDefault("toolver", toolVer) // current version of the dvln tool
 	globs.SetDesc("toolver", "current version of the dvln tool", globs.InternalUse, globs.ConstGlobal)
+
+	globs.SetDefault("apiver", apiVer) // current version of the dvln tool
+	globs.SetDesc("apiver", "current version of the dvln api", globs.InternalUse, globs.ConstGlobal)
+	if err := os.Setenv("PKG_API_APIVER", apiVer); err != nil {
+		out.Fatalln("Failed to set PKG_API_APIVER in the environment:", err)
+	}
 }
 
 // DvlnToolInfo returns the version of the dvln tool and the build date for
 // the binary being used and returns both, will return non-nil error on
 // issues (currently only possible error will result in empty build date)
-func DvlnToolInfo() (string, string, string, error) {
+func DvlnToolInfo() (string, string, string, string, error) {
 	toolVer := globs.GetString("toolver")
+	apiVer := globs.GetString("apiver")
 	// get the build date of the current executable
 	execName, buildDate, err := toolver.ExecutableInfo()
 	if err != nil {
 		fmt.Errorf("Problem determining build date, error: %s", err)
 	}
-	return execName, toolVer, buildDate, err
+	return execName, toolVer, buildDate, apiVer, err
 }
 
 // DvlnVerStr returns a string with the version of the dvln tool such
 // that it honors verbosity levels as well as look (text/json)
 func DvlnVerStr() string {
-	execName, toolVer, buildDate, err := DvlnToolInfo()
+	execName, toolVer, buildDate, apiVer, err := DvlnToolInfo()
 	// Get current runtime settings around desired verbosity and look (format)
 	look := globs.GetString("look")
 	terse := globs.GetBool("terse")
@@ -67,39 +80,32 @@ func DvlnVerStr() string {
 	}
 	type itemData struct {
 		ToolVersion string `json:"toolVersion" pretty:"Version"`
-		ExecName    string `json:"execName,omitempty" pretty:"Exec Name,omitempty"`
+		APIVersion  string `json:"apiVersion,omitempty" pretty:"API Rev,omitempty"`
 		BuildDate   string `json:"buildDate,omitempty" pretty:"Build Date,omitempty"`
+		ExecName    string `json:"execName,omitempty" pretty:"Exec Name,omitempty"`
 	}
+	fields := make([]string, 0, 0)
 	items := make([]interface{}, 0, 0)
+	verbosity := "regular"
 	var newItem itemData
 	newItem.ToolVersion = toolVer
+	fields = append(fields, "toolVersion")
 	if !terse {
+		newItem.APIVersion = apiVer
+		fields = append(fields, "apiVersion")
 		newItem.BuildDate = buildDate
+		fields = append(fields, "buildDate")
+	} else {
+		verbosity = "terse"
 	}
 	if verbose {
+		verbosity = "verbose"
 		newItem.ExecName = execName
+		fields = append(fields, "execName")
 	}
 	items = append(items, newItem)
 	if look == "json" {
-		j, err := json.Marshal(items)
-		//FIXME erik: need to push out into JSON mode to get json class errs,
-		//         same as below and all other errors, ie: write 'api' pkg
-		//         and in json.go create api.MarshalItems(items) and that
-		//         will do all the below and insert any errors into the
-		//         "overall" JSON struct (rest of this should migrate to new
-		//         package as well, see viper.go for similar code and we
-		//         don't like having duplicate code and such)
-		if err != nil {
-			out.Issueln("Failed to convert \"version\" items to JSON:", err)
-			return ""
-		}
-		var str string
-		str, err = out.PrettyJSON(j)
-		if err != nil {
-			out.Issueln("Unable to beautify JSON output:", err)
-			return ""
-		}
-		return str
+		return api.GetJSONString("", "dvlnVersion", "version", verbosity, fields, items)
 	}
 	return pretty.Sprintf("%# v", items)
 }
