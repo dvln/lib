@@ -105,7 +105,26 @@ func DvlnVerStr() string {
 	}
 	items = append(items, newItem)
 	if look == "json" {
-		return api.GetJSONString("", "dvlnVersion", "version", verbosity, fields, items)
+		// see lib/json.go for these json* variables
+		jsonLevel := globs.GetInt("jsonindentlevel")
+		api.SetJSONIndentLevel(jsonLevel)
+		raw := globs.GetBool("jsonraw")
+		api.SetJSONRaw(raw)
+		jsonPrefix := globs.GetString("jsonprefix")
+		api.SetJSONPrefix(jsonPrefix)
+		output, fatalProblem := api.GetJSONString("", "dvlnVersion", "version", verbosity, fields, items)
+		if fatalProblem {
+			out.Print(output)
+			out.Exit(-1)
+		}
+		return output
 	}
+	// see lib/text.go for these text* variables
+	humanize := globs.GetBool("texthumanize")
+	pretty.SetHumanize(humanize)
+	textLevel := globs.GetInt("textindentlevel")
+	pretty.SetOutputIndentLevel(textLevel)
+	textPrefixStr := globs.GetString("textprefix")
+	pretty.SetOutputPrefixStr(textPrefixStr)
 	return pretty.Sprintf("%# v", items)
 }
