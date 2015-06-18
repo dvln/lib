@@ -27,8 +27,8 @@ import (
 	"github.com/dvln/api"
 	"github.com/dvln/out"
 	"github.com/dvln/toolver"
-	"github.com/kr/pretty"
-	globs "github.com/spf13/viper"
+	"github.com/dvln/pretty"
+	globs "github.com/dvln/viper"
 )
 
 const (
