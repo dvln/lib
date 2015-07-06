@@ -26,8 +26,8 @@ import (
 
 	"github.com/dvln/api"
 	"github.com/dvln/out"
-	"github.com/dvln/toolver"
 	"github.com/dvln/pretty"
+	"github.com/dvln/toolver"
 	globs "github.com/dvln/viper"
 )
 
@@ -112,7 +112,7 @@ func DvlnVerStr() string {
 		api.SetJSONRaw(raw)
 		jsonPrefix := globs.GetString("jsonprefix")
 		api.SetJSONPrefix(jsonPrefix)
-		output, fatalProblem := api.GetJSONString("", "dvlnVersion", "version", verbosity, fields, items)
+		output, fatalProblem := api.GetJSONOutput("", "dvlnVersion", "version", verbosity, fields, items)
 		if fatalProblem {
 			out.Print(output)
 			out.Exit(-1)
