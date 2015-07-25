@@ -21,9 +21,6 @@
 package lib
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/dvln/api"
 	"github.com/dvln/out"
 	"github.com/dvln/pretty"
@@ -36,19 +33,6 @@ const (
 	apiVer  = "0.1"
 )
 
-func init() {
-	// Section: ConstGlobal variables to store data (default value only, no overrides)
-	// - please add them alphabetically and don't reuse existing opts/vars
-	globs.SetDefault("toolver", toolVer) // current version of the dvln tool
-	globs.SetDesc("toolver", "current version of the dvln tool", globs.InternalUse, globs.ConstGlobal)
-
-	globs.SetDefault("apiver", apiVer) // current version of the dvln tool
-	globs.SetDesc("apiver", "current version of the dvln api", globs.InternalUse, globs.ConstGlobal)
-	if err := os.Setenv("PKG_API_APIVER", apiVer); err != nil {
-		out.Fatalln("Failed to set PKG_API_APIVER in the environment:", err)
-	}
-}
-
 // DvlnToolInfo returns the version of the dvln tool and the build date for
 // the binary being used and returns both, will return non-nil error on
 // issues (currently only possible error will result in empty build date)
@@ -58,7 +42,7 @@ func DvlnToolInfo() (string, string, string, string, error) {
 	// get the build date of the current executable
 	execName, buildDate, err := toolver.ExecutableInfo()
 	if err != nil {
-		fmt.Errorf("Problem determining build date, error: %s", err)
+		out.Errorf("Problem determining build date, error: %s", err)
 	}
 	return execName, toolVer, buildDate, apiVer, err
 }
@@ -106,12 +90,9 @@ func DvlnVerStr() string {
 	items = append(items, newItem)
 	if look == "json" {
 		// see lib/json.go for these json* variables
-		jsonLevel := globs.GetInt("jsonindentlevel")
-		api.SetJSONIndentLevel(jsonLevel)
-		raw := globs.GetBool("jsonraw")
-		api.SetJSONRaw(raw)
-		jsonPrefix := globs.GetString("jsonprefix")
-		api.SetJSONPrefix(jsonPrefix)
+		api.SetJSONIndentLevel(globs.GetInt("jsonindentlevel"))
+		api.SetJSONRaw(globs.GetBool("jsonraw"))
+		api.SetJSONPrefix(globs.GetString("jsonprefix"))
 		output, fatalProblem := api.GetJSONOutput("", "dvlnVersion", "version", verbosity, fields, items)
 		if fatalProblem {
 			out.Print(output)
@@ -120,11 +101,8 @@ func DvlnVerStr() string {
 		return output
 	}
 	// see lib/text.go for these text* variables
-	humanize := globs.GetBool("texthumanize")
-	pretty.SetHumanize(humanize)
-	textLevel := globs.GetInt("textindentlevel")
-	pretty.SetOutputIndentLevel(textLevel)
-	textPrefixStr := globs.GetString("textprefix")
-	pretty.SetOutputPrefixStr(textPrefixStr)
+	pretty.SetHumanize(globs.GetBool("texthumanize"))
+	pretty.SetOutputIndentLevel(globs.GetInt("textindentlevel"))
+	pretty.SetOutputPrefixStr(globs.GetString("textprefix"))
 	return pretty.Sprintf("%# v", items)
 }
