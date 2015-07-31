@@ -22,9 +22,9 @@
 package lib
 
 import (
-	"dvln/lib/out"
 	"os"
 
+	"github.com/dvln/out"
 	globs "github.com/dvln/viper"
 )
 
