@@ -17,8 +17,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	globs "github.com/dvln/viper"
 	"github.com/dvln/testify/assert"
+	globs "github.com/dvln/viper"
 )
 
 func TestTextDvlnverOutput(t *testing.T) {
