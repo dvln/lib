@@ -48,8 +48,9 @@ func DvlnToolInfo() (string, string, string, string, error) {
 }
 
 // DvlnVerStr returns a string with the version of the dvln tool such
-// that it honors verbosity levels as well as look (text/json)
-func DvlnVerStr() string {
+// that it honors verbosity levels as well as look (text/json), params:
+//	commitSHA1 (string): optional; current commit sha1 or "" if non available
+func DvlnVerStr(commitSHA1 string) string {
 	execName, toolVer, buildDate, apiVer, err := DvlnToolInfo()
 	// Get current runtime settings around desired verbosity and look (format)
 	look := globs.GetString("look")
@@ -67,6 +68,7 @@ func DvlnVerStr() string {
 		APIVersion  string `json:"apiVersion,omitempty" pretty:"API Rev,omitempty"`
 		BuildDate   string `json:"buildDate,omitempty" pretty:"Build Date,omitempty"`
 		ExecName    string `json:"execName,omitempty" pretty:"Exec Name,omitempty"`
+		Commit      string `json:"commit,omitempty" pretty:"Commit,omitempty"`
 	}
 	fields := make([]string, 0, 0)
 	items := make([]interface{}, 0, 0)
@@ -86,6 +88,10 @@ func DvlnVerStr() string {
 		verbosity = "verbose"
 		newItem.ExecName = execName
 		fields = append(fields, "execName")
+		if commitSHA1 != "" {
+			newItem.Commit = commitSHA1
+			fields = append(fields, "commit")
+		}
 	}
 	items = append(items, newItem)
 	if look == "json" {

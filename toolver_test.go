@@ -23,7 +23,7 @@ import (
 
 func TestTextDvlnverOutput(t *testing.T) {
 	// Try "standard" verbosity with text output, see if right items set
-	output := DvlnVerStr()
+	output := DvlnVerStr("")
 	assert.Contains(t, output, "Version:")
 	assert.Contains(t, output, "API Rev:")
 	assert.Contains(t, output, "Build Date:")
@@ -31,16 +31,17 @@ func TestTextDvlnverOutput(t *testing.T) {
 
 	// Try "verbose" output
 	globs.Set("verbose", true)
-	output = DvlnVerStr()
+	output = DvlnVerStr("a123456789012345678901234")
 	assert.Contains(t, output, "Version:")
 	assert.Contains(t, output, "API Rev:")
 	assert.Contains(t, output, "Build Date:")
 	assert.Contains(t, output, "Exec Name:")
+	assert.Contains(t, output, "Commit:")
 
 	// Try "terse" output
 	globs.Set("verbose", false)
 	globs.Set("terse", true)
-	output = DvlnVerStr()
+	output = DvlnVerStr("")
 	assert.Contains(t, output, "Version:")
 	assert.NotContains(t, output, "API Rev:")
 	assert.NotContains(t, output, "Build Date:")
@@ -51,7 +52,7 @@ func TestTextDvlnverOutput(t *testing.T) {
 func TestJSONDvlnverOutput(t *testing.T) {
 	// Try "standard" verbosity with JSON output, see if right items set
 	globs.Set("look", "json")
-	output := DvlnVerStr()
+	output := DvlnVerStr("")
 	assert.Contains(t, output, "  \"context\": \"dvlnVersion\"")
 	assert.Contains(t, output, "    \"items\":")
 	assert.Contains(t, output, "        \"toolVersion\":")
@@ -68,13 +69,14 @@ func TestJSONDvlnverOutput(t *testing.T) {
 
 	// Try "verbose" output
 	globs.Set("verbose", true)
-	output = DvlnVerStr()
+	output = DvlnVerStr("a123456789012345678901234")
 	assert.Contains(t, output, "  \"context\": \"dvlnVersion\"")
 	assert.Contains(t, output, "    \"items\":")
 	assert.Contains(t, output, "        \"toolVersion\":")
 	assert.Contains(t, output, "        \"apiVersion\":")
 	assert.Contains(t, output, "        \"buildDate\":")
 	assert.Contains(t, output, "        \"execName\":")
+	assert.Contains(t, output, "        \"commit\":")
 	err = json.Unmarshal([]byte(output), &result)
 	if err != nil {
 		t.Fatalf("Unable to unmarshal verbose JSON output: %s", err)
@@ -83,7 +85,7 @@ func TestJSONDvlnverOutput(t *testing.T) {
 	// Try "terse" output
 	globs.Set("verbose", false)
 	globs.Set("terse", true)
-	output = DvlnVerStr()
+	output = DvlnVerStr("")
 	assert.Contains(t, output, "  \"context\": \"dvlnVersion\"")
 	assert.Contains(t, output, "    \"items\":")
 	assert.Contains(t, output, "        \"toolVersion\":")
